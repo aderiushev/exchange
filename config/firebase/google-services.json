@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "750863756247",
+    "project_id": "exchange-e389d",
+    "storage_bucket": "exchange-e389d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:750863756247:android:efcb8761c06f5edc9fb992",
+        "android_client_info": {
+          "package_name": "com.aderiushev.exchange"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsRiypZHSCm0PHC-OGZoT4jF8UkNUsNzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
