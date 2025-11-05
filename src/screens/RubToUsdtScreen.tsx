@@ -1,21 +1,58 @@
 import React, { useState } from 'react';
 import { RefreshControl, ScrollView, Linking } from 'react-native';
-import { YStack, Text, Spinner, Button, Input } from 'tamagui';
+import {YStack, Text, Spinner, Button, XStack} from 'tamagui';
 import { useExchangeStore } from '../store/exchangeStore';
 import { VersionDisplay } from '../components/VersionDisplay';
+import { PriceDisplay } from '../components/PriceDisplay';
+import { CurrencyInput } from '../components/CurrencyInput';
 
 export const RubToUsdtScreen = () => {
   const { rubToUsdt, lastUpdated, isLoading, isRefreshing, error, refreshRates, clearError } = useExchangeStore();
 
-  // State for input amount
-  const [rubInput, setRubInput] = useState('');
+  // State for input amounts
+  const [giveAmount, setGiveAmount] = useState('');
+  const [receiveAmount, setReceiveAmount] = useState('');
 
-  // Calculate converted amount
-  const calculateConversion = (input: string, rate: number | null): string => {
-    if (!input || !rate) return '0.00';
-    const amount = parseFloat(input);
-    if (isNaN(amount)) return '0.00';
-    return (amount * rate).toFixed(2);
+  // Handle give amount change - calculate receive amount
+  // Rate represents: 1 USDT = X RUB (e.g., 82.878), so to convert RUB → USDT: divide
+  const handleGiveChange = (text: string) => {
+    setGiveAmount(text);
+
+    if (!text || !rubToUsdt?.rate || rubToUsdt.rate === 0) {
+      setReceiveAmount('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setReceiveAmount('');
+      return;
+    }
+
+    // Convert RUB to USDT: divide by rate (82 RUB ÷ 82.878 = ~1 USDT)
+    const converted = amount / rubToUsdt.rate;
+    setReceiveAmount(converted.toFixed(4));
+  };
+
+  // Handle receive amount change - calculate give amount (reverse)
+  // To convert USDT → RUB: multiply (1 USDT × 82.878 = 82.878 RUB)
+  const handleReceiveChange = (text: string) => {
+    setReceiveAmount(text);
+
+    if (!text || !rubToUsdt?.rate || rubToUsdt.rate === 0) {
+      setGiveAmount('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setGiveAmount('');
+      return;
+    }
+
+    // Convert USDT to RUB: multiply by rate (1 USDT × 82.878 = 82.878 RUB)
+    const converted = amount * rubToUsdt.rate;
+    setGiveAmount(converted.toFixed(2));
   };
 
   const formatTimestamp = (timestamp: number) => {
@@ -87,12 +124,17 @@ export const RubToUsdtScreen = () => {
             >
               <YStack space="$4" alignItems="center">
                 <YStack space="$2" alignItems="center">
-                  <Text fontSize="$10" fontWeight="bold" color="#60a5fa">
-                    {rubToUsdt.rate.toFixed(4)}
-                  </Text>
-                  <Text fontSize="$4" color="#9ca3af">
-                    1 RUB = {rubToUsdt.rate.toFixed(4)} USDT
-                  </Text>
+                  <PriceDisplay
+                    value={rubToUsdt.rate}
+                    baseFontSize={40}
+                    color="#60a5fa"
+                  />
+                  <XStack alignItems="center">
+                    <Text fontSize="$4" color="#9ca3af">
+                      1 USDT ={' '}
+                    </Text>
+                    <PriceDisplay value={rubToUsdt.rate} baseFontSize={16} color="#9ca3af" currency="RUB" />
+                  </XStack>
                 </YStack>
 
                 <YStack alignItems="center" space="$2" marginTop="$4">
@@ -125,36 +167,18 @@ export const RubToUsdtScreen = () => {
                   )}
                 </YStack>
 
-                {/* Input Section */}
-                <YStack space="$2" marginTop="$4" width="100%">
-                  <Text fontSize="$3" color="#9ca3af">
-                    Enter RUB amount:
-                  </Text>
-                  <Input
-                    value={rubInput}
-                    onChangeText={setRubInput}
-                    placeholder="0"
-                    keyboardType="numeric"
-                    backgroundColor="#111827"
-                    borderColor="#3a3a3a"
-                    color="#e5e7eb"
-                    placeholderTextColor="#6b7280"
-                    size="$4"
+                {/* Bidirectional Currency Input */}
+                <YStack marginTop="$4" width="100%">
+                  <CurrencyInput
+                    giveLabel="You give:"
+                    giveCurrency="RUB"
+                    giveValue={giveAmount}
+                    onGiveChange={handleGiveChange}
+                    receiveLabel="You receive:"
+                    receiveCurrency="USDT"
+                    receiveValue={receiveAmount}
+                    onReceiveChange={handleReceiveChange}
                   />
-                  <YStack
-                    backgroundColor="#0f172a"
-                    padding="$3"
-                    borderRadius="$3"
-                    borderWidth={1}
-                    borderColor="#1e293b"
-                  >
-                    <Text fontSize="$2" color="#9ca3af" marginBottom="$1">
-                      You will receive:
-                    </Text>
-                    <Text fontSize="$5" fontWeight="bold" color="#10b981">
-                      {calculateConversion(rubInput, rubToUsdt.rate)} USDT
-                    </Text>
-                  </YStack>
                 </YStack>
               </YStack>
             </YStack>

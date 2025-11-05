@@ -112,6 +112,13 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
         rubToEurData.timestamp
       );
 
+      // Invert USDT→EUR rate because BestChange shows EUR per USDT (inverted)
+      // Economic reality: 1 EUR ≈ 1.05-1.10 USDT, so we invert the scraped rate
+      const invertedUsdtToEurRate = usdtToEurData.rate !== 0 ? 1 / usdtToEurData.rate : 0;
+
+      // Calculate indirect rate with inverted USDT→EUR rate
+      const correctedIndirectRate = rubToUsdtData.rate * invertedUsdtToEurRate;
+
       set({
         rubToUsdt: {
           rate: rubToUsdtData.rate,
@@ -120,13 +127,13 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
           source: 'RUB → USDT (TRC20)',
         },
         usdtToEur: {
-          rate: usdtToEurData.rate,
+          rate: invertedUsdtToEurRate,
           exchangeName: usdtToEurData.exchangeName,
           exchangeUrl: usdtToEurData.exchangeUrl,
           source: 'USDT (TRC20) → EUR',
         },
         rubToEurDirect: rubToEurData.rate,
-        rubToEurIndirect: indirectRate,
+        rubToEurIndirect: correctedIndirectRate,
         rubToEurExchangeName: rubToEurData.exchangeName,
         rubToEurExchangeUrl: rubToEurData.exchangeUrl,
         lastUpdated: latestTimestamp,
@@ -165,8 +172,12 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
         fetchLatestRate('RUB_EUR'),
       ]);
 
-      // Calculate indirect rate (RUB → USDT → EUR)
-      const indirectRate = rubToUsdtData.rate * usdtToEurData.rate;
+      // Invert USDT→EUR rate because BestChange shows EUR per USDT (inverted)
+      // Economic reality: 1 EUR ≈ 1.05-1.10 USDT, so we invert the scraped rate
+      const invertedUsdtToEurRate = usdtToEurData.rate !== 0 ? 1 / usdtToEurData.rate : 0;
+
+      // Calculate indirect rate with inverted USDT→EUR rate (RUB → USDT → EUR)
+      const correctedIndirectRate = rubToUsdtData.rate * invertedUsdtToEurRate;
 
       // Use the most recent timestamp from all three queries
       const latestTimestamp = Math.max(
@@ -183,13 +194,13 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
           source: 'RUB → USDT (TRC20)',
         },
         usdtToEur: {
-          rate: usdtToEurData.rate,
+          rate: invertedUsdtToEurRate,
           exchangeName: usdtToEurData.exchangeName,
           exchangeUrl: usdtToEurData.exchangeUrl,
           source: 'USDT (TRC20) → EUR',
         },
         rubToEurDirect: rubToEurData.rate,
-        rubToEurIndirect: indirectRate,
+        rubToEurIndirect: correctedIndirectRate,
         rubToEurExchangeName: rubToEurData.exchangeName,
         rubToEurExchangeUrl: rubToEurData.exchangeUrl,
         lastUpdated: latestTimestamp,

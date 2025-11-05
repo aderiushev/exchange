@@ -1,21 +1,58 @@
 import React, { useState } from 'react';
 import { RefreshControl, ScrollView, Linking } from 'react-native';
-import { YStack, Text, Spinner, Button, Input } from 'tamagui';
+import {YStack, Text, Spinner, Button, XStack} from 'tamagui';
 import { useExchangeStore } from '../store/exchangeStore';
 import { VersionDisplay } from '../components/VersionDisplay';
+import { PriceDisplay } from '../components/PriceDisplay';
+import { CurrencyInput } from '../components/CurrencyInput';
 
 export const UsdtToEurScreen = () => {
   const { usdtToEur, lastUpdated, isLoading, isRefreshing, error, refreshRates, clearError } = useExchangeStore();
 
-  // State for input amount
-  const [usdtInput, setUsdtInput] = useState('');
+  // State for input amounts
+  const [giveAmount, setGiveAmount] = useState('');
+  const [receiveAmount, setReceiveAmount] = useState('');
 
-  // Calculate converted amount
-  const calculateConversion = (input: string, rate: number | null): string => {
-    if (!input || !rate) return '0.00';
-    const amount = parseFloat(input);
-    if (isNaN(amount)) return '0.00';
-    return (amount * rate).toFixed(2);
+  // Handle give amount change - calculate receive amount
+  // Rate represents: 1 USDT = X EUR (e.g., 0.95), so to convert USDT → EUR: multiply
+  const handleGiveChange = (text: string) => {
+    setGiveAmount(text);
+
+    if (!text || !usdtToEur?.rate || usdtToEur.rate === 0) {
+      setReceiveAmount('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setReceiveAmount('');
+      return;
+    }
+
+    // Convert USDT to EUR: multiply by rate (1 USDT × 0.95 = 0.95 EUR)
+    const converted = amount * usdtToEur.rate;
+    setReceiveAmount(converted.toFixed(4));
+  };
+
+  // Handle receive amount change - calculate give amount (reverse)
+  // To convert EUR → USDT: divide (0.95 EUR ÷ 0.95 = 1 USDT)
+  const handleReceiveChange = (text: string) => {
+    setReceiveAmount(text);
+
+    if (!text || !usdtToEur?.rate || usdtToEur.rate === 0) {
+      setGiveAmount('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setGiveAmount('');
+      return;
+    }
+
+    // Convert EUR to USDT: divide by rate (0.95 EUR ÷ 0.95 = 1 USDT)
+    const converted = amount / usdtToEur.rate;
+    setGiveAmount(converted.toFixed(4));
   };
 
   const formatTimestamp = (timestamp: number) => {
@@ -87,12 +124,17 @@ export const UsdtToEurScreen = () => {
             >
               <YStack space="$4" alignItems="center">
                 <YStack space="$2" alignItems="center">
-                  <Text fontSize="$10" fontWeight="bold" color="#60a5fa">
-                    {usdtToEur.rate.toFixed(4)}
-                  </Text>
-                  <Text fontSize="$4" color="#9ca3af">
-                    1 USDT = {usdtToEur.rate.toFixed(4)} EUR
-                  </Text>
+                  <PriceDisplay
+                    value={usdtToEur.rate}
+                    baseFontSize={40}
+                    color="#60a5fa"
+                  />
+                  <XStack alignItems="center">
+                    <Text fontSize="$4" color="#9ca3af">
+                      1 USDT ={' '}
+                    </Text>
+                    <PriceDisplay value={usdtToEur.rate} baseFontSize={16} color="#9ca3af" currency="EUR" />
+                  </XStack>
                 </YStack>
 
                 <YStack alignItems="center" space="$2" marginTop="$4">
@@ -125,36 +167,18 @@ export const UsdtToEurScreen = () => {
                   )}
                 </YStack>
 
-                {/* Input Section */}
-                <YStack space="$2" marginTop="$4" width="100%">
-                  <Text fontSize="$3" color="#9ca3af">
-                    Enter USDT amount:
-                  </Text>
-                  <Input
-                    value={usdtInput}
-                    onChangeText={setUsdtInput}
-                    placeholder="0"
-                    keyboardType="numeric"
-                    backgroundColor="#111827"
-                    borderColor="#3a3a3a"
-                    color="#e5e7eb"
-                    placeholderTextColor="#6b7280"
-                    size="$4"
+                {/* Bidirectional Currency Input */}
+                <YStack marginTop="$4" width="100%">
+                  <CurrencyInput
+                    giveLabel="You give:"
+                    giveCurrency="USDT"
+                    giveValue={giveAmount}
+                    onGiveChange={handleGiveChange}
+                    receiveLabel="You receive:"
+                    receiveCurrency="EUR"
+                    receiveValue={receiveAmount}
+                    onReceiveChange={handleReceiveChange}
                   />
-                  <YStack
-                    backgroundColor="#0f172a"
-                    padding="$3"
-                    borderRadius="$3"
-                    borderWidth={1}
-                    borderColor="#1e293b"
-                  >
-                    <Text fontSize="$2" color="#9ca3af" marginBottom="$1">
-                      You will receive:
-                    </Text>
-                    <Text fontSize="$5" fontWeight="bold" color="#10b981">
-                      {calculateConversion(usdtInput, usdtToEur.rate)} EUR
-                    </Text>
-                  </YStack>
                 </YStack>
               </YStack>
             </YStack>

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { RefreshControl, ScrollView, Linking } from 'react-native';
-import { YStack, Text, Spinner, Button, Input } from 'tamagui';
+import { YStack, Text, Spinner, Button } from 'tamagui';
 import { useExchangeStore } from '../store/exchangeStore';
 import { VersionDisplay } from '../components/VersionDisplay';
+import { PriceDisplay } from '../components/PriceDisplay';
+import { CurrencyInput } from '../components/CurrencyInput';
 
 export const RubToEurScreen = () => {
   const {
@@ -20,11 +22,21 @@ export const RubToEurScreen = () => {
     clearError,
   } = useExchangeStore();
 
-  // State for input amounts
-  const [rubToUsdtInput, setRubToUsdtInput] = useState('');
-  const [usdtToEurInput, setUsdtToEurInput] = useState('');
-  const [rubToEurDirectInput, setRubToEurDirectInput] = useState('');
-  const [rubToEurIndirectInput, setRubToEurIndirectInput] = useState('');
+  // State for RUB → USDT conversion
+  const [rubToUsdtGive, setRubToUsdtGive] = useState('');
+  const [rubToUsdtReceive, setRubToUsdtReceive] = useState('');
+
+  // State for USDT → EUR conversion
+  const [usdtToEurGive, setUsdtToEurGive] = useState('');
+  const [usdtToEurReceive, setUsdtToEurReceive] = useState('');
+
+  // State for RUB → EUR Indirect conversion
+  const [rubToEurIndirectGive, setRubToEurIndirectGive] = useState('');
+  const [rubToEurIndirectReceive, setRubToEurIndirectReceive] = useState('');
+
+  // State for RUB → EUR Direct conversion
+  const [rubToEurDirectGive, setRubToEurDirectGive] = useState('');
+  const [rubToEurDirectReceive, setRubToEurDirectReceive] = useState('');
 
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -37,12 +49,164 @@ export const RubToEurScreen = () => {
     }
   };
 
-  // Calculate converted amounts
-  const calculateConversion = (input: string, rate: number | null): string => {
-    if (!input || !rate) return '0.00';
-    const amount = parseFloat(input);
-    if (isNaN(amount)) return '0.00';
-    return (amount * rate).toFixed(2);
+  // Handlers for RUB → USDT
+  // Rate represents: 1 USDT = X RUB, so to convert RUB → USDT: divide
+  const handleRubToUsdtGiveChange = (text: string) => {
+    setRubToUsdtGive(text);
+
+    if (!text || !rubToUsdt?.rate || rubToUsdt.rate === 0) {
+      setRubToUsdtReceive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setRubToUsdtReceive('');
+      return;
+    }
+
+    // Convert RUB to USDT: divide by rate
+    const converted = amount / rubToUsdt.rate;
+    setRubToUsdtReceive(converted.toFixed(4));
+  };
+
+  const handleRubToUsdtReceiveChange = (text: string) => {
+    setRubToUsdtReceive(text);
+
+    if (!text || !rubToUsdt?.rate || rubToUsdt.rate === 0) {
+      setRubToUsdtGive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setRubToUsdtGive('');
+      return;
+    }
+
+    // Convert USDT to RUB: multiply by rate
+    const converted = amount * rubToUsdt.rate;
+    setRubToUsdtGive(converted.toFixed(2));
+  };
+
+  // Handlers for USDT → EUR
+  // Rate represents: 1 USDT = X EUR, so to convert USDT → EUR: multiply
+  const handleUsdtToEurGiveChange = (text: string) => {
+    setUsdtToEurGive(text);
+
+    if (!text || !usdtToEur?.rate || usdtToEur.rate === 0) {
+      setUsdtToEurReceive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setUsdtToEurReceive('');
+      return;
+    }
+
+    // Convert USDT to EUR: multiply by rate
+    const converted = amount * usdtToEur.rate;
+    setUsdtToEurReceive(converted.toFixed(4));
+  };
+
+  const handleUsdtToEurReceiveChange = (text: string) => {
+    setUsdtToEurReceive(text);
+
+    if (!text || !usdtToEur?.rate || usdtToEur.rate === 0) {
+      setUsdtToEurGive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setUsdtToEurGive('');
+      return;
+    }
+
+    // Convert EUR to USDT: divide by rate
+    const converted = amount / usdtToEur.rate;
+    setUsdtToEurGive(converted.toFixed(4));
+  };
+
+  // Handlers for RUB → EUR Indirect
+  // Rate represents: 1 EUR = X RUB, so to convert RUB → EUR: divide
+  const handleRubToEurIndirectGiveChange = (text: string) => {
+    setRubToEurIndirectGive(text);
+
+    if (!text || !rubToEurIndirect || rubToEurIndirect === 0) {
+      setRubToEurIndirectReceive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setRubToEurIndirectReceive('');
+      return;
+    }
+
+    // Convert RUB to EUR: divide by rate
+    const converted = amount / rubToEurIndirect;
+    setRubToEurIndirectReceive(converted.toFixed(4));
+  };
+
+  const handleRubToEurIndirectReceiveChange = (text: string) => {
+    setRubToEurIndirectReceive(text);
+
+    if (!text || !rubToEurIndirect || rubToEurIndirect === 0) {
+      setRubToEurIndirectGive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setRubToEurIndirectGive('');
+      return;
+    }
+
+    // Convert EUR to RUB: multiply by rate
+    const converted = amount * rubToEurIndirect;
+    setRubToEurIndirectGive(converted.toFixed(2));
+  };
+
+  // Handlers for RUB → EUR Direct
+  // Rate represents: 1 EUR = X RUB, so to convert RUB → EUR: divide
+  const handleRubToEurDirectGiveChange = (text: string) => {
+    setRubToEurDirectGive(text);
+
+    if (!text || !rubToEurDirect || rubToEurDirect === 0) {
+      setRubToEurDirectReceive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setRubToEurDirectReceive('');
+      return;
+    }
+
+    // Convert RUB to EUR: divide by rate
+    const converted = amount / rubToEurDirect;
+    setRubToEurDirectReceive(converted.toFixed(4));
+  };
+
+  const handleRubToEurDirectReceiveChange = (text: string) => {
+    setRubToEurDirectReceive(text);
+
+    if (!text || !rubToEurDirect || rubToEurDirect === 0) {
+      setRubToEurDirectGive('');
+      return;
+    }
+
+    const amount = parseFloat(text);
+    if (isNaN(amount) || amount === 0) {
+      setRubToEurDirectGive('');
+      return;
+    }
+
+    // Convert EUR to RUB: multiply by rate
+    const converted = amount * rubToEurDirect;
+    setRubToEurDirectGive(converted.toFixed(2));
   };
 
   const isStale = lastUpdated && Date.now() - lastUpdated > 5 * 60 * 1000; // 5 minutes
@@ -91,40 +255,26 @@ export const RubToEurScreen = () => {
                 <Text fontSize="$5" fontWeight="600" color="#e5e7eb" marginBottom="$2">
                   RUB → USDT
                 </Text>
-                <Text fontSize="$6" fontWeight="bold" color="#60a5fa" marginBottom="$3">
-                  {rubToUsdt.rate.toFixed(4)}
-                </Text>
-
-                {/* Input Section */}
-                <YStack space="$2" marginTop="$3">
-                  <Text fontSize="$3" color="#9ca3af">
-                    Enter RUB amount:
-                  </Text>
-                  <Input
-                    value={rubToUsdtInput}
-                    onChangeText={setRubToUsdtInput}
-                    placeholder="0"
-                    keyboardType="numeric"
-                    backgroundColor="#111827"
-                    borderColor="#3a3a3a"
-                    color="#e5e7eb"
-                    placeholderTextColor="#6b7280"
-                    size="$4"
+                <YStack marginBottom="$3">
+                  <PriceDisplay
+                    value={rubToUsdt.rate}
+                    baseFontSize={24}
+                    color="#60a5fa"
                   />
-                  <YStack
-                    backgroundColor="#0f172a"
-                    padding="$3"
-                    borderRadius="$3"
-                    borderWidth={1}
-                    borderColor="#1e293b"
-                  >
-                    <Text fontSize="$2" color="#9ca3af" marginBottom="$1">
-                      You will receive:
-                    </Text>
-                    <Text fontSize="$5" fontWeight="bold" color="#10b981">
-                      {calculateConversion(rubToUsdtInput, rubToUsdt.rate)} USDT
-                    </Text>
-                  </YStack>
+                </YStack>
+
+                {/* Bidirectional Currency Input */}
+                <YStack marginTop="$3">
+                  <CurrencyInput
+                    giveLabel="You give:"
+                    giveCurrency="RUB"
+                    giveValue={rubToUsdtGive}
+                    onGiveChange={handleRubToUsdtGiveChange}
+                    receiveLabel="You receive:"
+                    receiveCurrency="USDT"
+                    receiveValue={rubToUsdtReceive}
+                    onReceiveChange={handleRubToUsdtReceiveChange}
+                  />
                 </YStack>
               </YStack>
             )}
@@ -141,40 +291,26 @@ export const RubToEurScreen = () => {
                 <Text fontSize="$5" fontWeight="600" color="#e5e7eb" marginBottom="$2">
                   USDT → EUR
                 </Text>
-                <Text fontSize="$6" fontWeight="bold" color="#60a5fa" marginBottom="$3">
-                  {usdtToEur.rate.toFixed(4)}
-                </Text>
-
-                {/* Input Section */}
-                <YStack space="$2" marginTop="$3">
-                  <Text fontSize="$3" color="#9ca3af">
-                    Enter USDT amount:
-                  </Text>
-                  <Input
-                    value={usdtToEurInput}
-                    onChangeText={setUsdtToEurInput}
-                    placeholder="0"
-                    keyboardType="numeric"
-                    backgroundColor="#111827"
-                    borderColor="#3a3a3a"
-                    color="#e5e7eb"
-                    placeholderTextColor="#6b7280"
-                    size="$4"
+                <YStack marginBottom="$3">
+                  <PriceDisplay
+                    value={usdtToEur.rate}
+                    baseFontSize={24}
+                    color="#60a5fa"
                   />
-                  <YStack
-                    backgroundColor="#0f172a"
-                    padding="$3"
-                    borderRadius="$3"
-                    borderWidth={1}
-                    borderColor="#1e293b"
-                  >
-                    <Text fontSize="$2" color="#9ca3af" marginBottom="$1">
-                      You will receive:
-                    </Text>
-                    <Text fontSize="$5" fontWeight="bold" color="#10b981">
-                      {calculateConversion(usdtToEurInput, usdtToEur.rate)} EUR
-                    </Text>
-                  </YStack>
+                </YStack>
+
+                {/* Bidirectional Currency Input */}
+                <YStack marginTop="$3">
+                  <CurrencyInput
+                    giveLabel="You give:"
+                    giveCurrency="USDT"
+                    giveValue={usdtToEurGive}
+                    onGiveChange={handleUsdtToEurGiveChange}
+                    receiveLabel="You receive:"
+                    receiveCurrency="EUR"
+                    receiveValue={usdtToEurReceive}
+                    onReceiveChange={handleUsdtToEurReceiveChange}
+                  />
                 </YStack>
               </YStack>
             )}
@@ -193,40 +329,26 @@ export const RubToEurScreen = () => {
               <Text fontSize="$3" color="#9ca3af" marginBottom="$3">
                 RUB → USDT → EUR
               </Text>
-              <Text fontSize="$6" fontWeight="bold" color="#60a5fa" marginBottom="$3">
-                {rubToEurIndirect.toFixed(4)}
-              </Text>
-
-              {/* Input Section */}
-              <YStack space="$2" marginTop="$3">
-                <Text fontSize="$3" color="#9ca3af">
-                  Enter RUB amount:
-                </Text>
-                <Input
-                  value={rubToEurIndirectInput}
-                  onChangeText={setRubToEurIndirectInput}
-                  placeholder="0"
-                  keyboardType="numeric"
-                  backgroundColor="#111827"
-                  borderColor="#3a3a3a"
-                  color="#e5e7eb"
-                  placeholderTextColor="#6b7280"
-                  size="$4"
+              <YStack marginBottom="$3">
+                <PriceDisplay
+                  value={rubToEurIndirect}
+                  baseFontSize={24}
+                  color="#60a5fa"
                 />
-                <YStack
-                  backgroundColor="#0f172a"
-                  padding="$3"
-                  borderRadius="$3"
-                  borderWidth={1}
-                  borderColor="#1e293b"
-                >
-                  <Text fontSize="$2" color="#9ca3af" marginBottom="$1">
-                    You will receive:
-                  </Text>
-                  <Text fontSize="$5" fontWeight="bold" color="#10b981">
-                    {calculateConversion(rubToEurIndirectInput, rubToEurIndirect)} EUR
-                  </Text>
-                </YStack>
+              </YStack>
+
+              {/* Bidirectional Currency Input */}
+              <YStack marginTop="$3">
+                <CurrencyInput
+                  giveLabel="You give:"
+                  giveCurrency="RUB"
+                  giveValue={rubToEurIndirectGive}
+                  onGiveChange={handleRubToEurIndirectGiveChange}
+                  receiveLabel="You receive:"
+                  receiveCurrency="EUR"
+                  receiveValue={rubToEurIndirectReceive}
+                  onReceiveChange={handleRubToEurIndirectReceiveChange}
+                />
               </YStack>
             </YStack>
 
@@ -244,9 +366,13 @@ export const RubToEurScreen = () => {
               <Text fontSize="$3" color="#9ca3af" marginBottom="$3">
                 Direct exchange from BestChange
               </Text>
-              <Text fontSize="$6" fontWeight="bold" color="#60a5fa" marginBottom="$3">
-                {rubToEurDirect.toFixed(4)}
-              </Text>
+              <YStack marginBottom="$3">
+                <PriceDisplay
+                  value={rubToEurDirect}
+                  baseFontSize={24}
+                  color="#60a5fa"
+                />
+              </YStack>
 
               {/* Exchange Name and URL */}
               {rubToEurExchangeName && (
@@ -268,36 +394,18 @@ export const RubToEurScreen = () => {
                 </YStack>
               )}
 
-              {/* Input Section */}
-              <YStack space="$2" marginTop="$3">
-                <Text fontSize="$3" color="#9ca3af">
-                  Enter RUB amount:
-                </Text>
-                <Input
-                  value={rubToEurDirectInput}
-                  onChangeText={setRubToEurDirectInput}
-                  placeholder="0"
-                  keyboardType="numeric"
-                  backgroundColor="#111827"
-                  borderColor="#3a3a3a"
-                  color="#e5e7eb"
-                  placeholderTextColor="#6b7280"
-                  size="$4"
+              {/* Bidirectional Currency Input */}
+              <YStack marginTop="$3">
+                <CurrencyInput
+                  giveLabel="You give:"
+                  giveCurrency="RUB"
+                  giveValue={rubToEurDirectGive}
+                  onGiveChange={handleRubToEurDirectGiveChange}
+                  receiveLabel="You receive:"
+                  receiveCurrency="EUR"
+                  receiveValue={rubToEurDirectReceive}
+                  onReceiveChange={handleRubToEurDirectReceiveChange}
                 />
-                <YStack
-                  backgroundColor="#0f172a"
-                  padding="$3"
-                  borderRadius="$3"
-                  borderWidth={1}
-                  borderColor="#1e293b"
-                >
-                  <Text fontSize="$2" color="#9ca3af" marginBottom="$1">
-                    You will receive:
-                  </Text>
-                  <Text fontSize="$5" fontWeight="bold" color="#10b981">
-                    {calculateConversion(rubToEurDirectInput, rubToEurDirect)} EUR
-                  </Text>
-                </YStack>
               </YStack>
             </YStack>
 

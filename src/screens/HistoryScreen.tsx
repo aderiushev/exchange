@@ -113,8 +113,7 @@ export const HistoryScreen = () => {
       style={{ flex: 1, backgroundColor: '#111827' }}
       contentContainerStyle={{ paddingBottom: 20 }}
     >
-      <YStack flex={1} padding="$4" space="$4" gap="$4" backgroundColor="#111827">
-        {/* Currency Pair Selector */}
+      <YStack flex={1} padding="$4" gap="$4" backgroundColor="#111827">
         <YStack gap="$2">
           <Text fontSize="$5" fontWeight="600" color="#e5e7eb">
             Select Currency Pair
@@ -160,7 +159,7 @@ export const HistoryScreen = () => {
         )}
 
         {/* Chart and Data */}
-        {!isLoading && !error && historicalRates.length > 0 && (
+        {!isLoading && !error && !!historicalRates.length && (
           <>
             {/* Chart */}
             <YStack
@@ -214,7 +213,7 @@ export const HistoryScreen = () => {
               gap="$2"
             >
               <Text fontSize="$5" fontWeight="600" color="#e5e7eb">
-                Historical Records ({historicalRates.length})
+                Historical Records
               </Text>
 
               {historicalRates.map((rate) => (
@@ -225,7 +224,6 @@ export const HistoryScreen = () => {
                   padding="$3"
                   borderWidth={1}
                   borderColor="#374151"
-                  space="$2"
                 >
                   <XStack justifyContent="space-between" alignItems="center">
                     <Text fontSize="$6" fontWeight="bold" color="#60a5fa">
@@ -244,8 +242,7 @@ export const HistoryScreen = () => {
           </>
         )}
 
-         No Data State
-        {!isLoading && !error && historicalRates.length === 0 && (
+        {!isLoading && !error && !historicalRates.length && (
           <YStack flex={1} justifyContent="center" alignItems="center" paddingVertical="$8">
             <Text color="#9ca3af" textAlign="center">
               No historical data available for this currency pair.
