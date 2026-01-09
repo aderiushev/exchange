@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { RefreshControl, ScrollView, Linking } from 'react-native';
 import {YStack, Text, Spinner, Button, XStack} from 'tamagui';
+import { useFocusEffect } from '@react-navigation/native';
 import { useExchangeStore } from '../store/exchangeStore';
 import { VersionDisplay } from '../components/VersionDisplay';
 import { PriceDisplay } from '../components/PriceDisplay';
@@ -8,6 +9,13 @@ import { CurrencyInput } from '../components/CurrencyInput';
 
 export const RubToUsdtScreen = () => {
   const { rubToUsdt, lastUpdated, isLoading, isRefreshing, error, refreshRates, clearError } = useExchangeStore();
+
+  // Fetch rates when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshRates();
+    }, [refreshRates])
+  );
 
   // State for input amounts
   const [giveAmount, setGiveAmount] = useState('');

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { RefreshControl, ScrollView, Linking } from 'react-native';
 import { YStack, Text, Spinner, Button } from 'tamagui';
+import { useFocusEffect } from '@react-navigation/native';
 import { useExchangeStore } from '../store/exchangeStore';
 import { VersionDisplay } from '../components/VersionDisplay';
 import { PriceDisplay } from '../components/PriceDisplay';
@@ -21,6 +22,13 @@ export const RubToEurScreen = () => {
     refreshRates,
     clearError,
   } = useExchangeStore();
+
+  // Fetch rates when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshRates();
+    }, [refreshRates])
+  );
 
   // State for RUB → USDT conversion
   const [rubToUsdtGive, setRubToUsdtGive] = useState('');
@@ -336,6 +344,48 @@ export const RubToEurScreen = () => {
                   color="#60a5fa"
                 />
               </YStack>
+
+              {/* Calculation Breakdown */}
+              {rubToUsdt && usdtToEur && (
+                <YStack
+                  padding="$3"
+                  backgroundColor="#111827"
+                  borderRadius="$3"
+                  borderWidth={1}
+                  borderColor="#374151"
+                  marginBottom="$3"
+                  space="$2"
+                >
+                  <Text fontSize="$2" fontWeight="600" color="#e5e7eb">
+                    Calculation Breakdown:
+                  </Text>
+                  <YStack space="$1">
+                    <Text fontSize="$2" color="#9ca3af">
+                      • RUB → USDT: 1 USDT = {rubToUsdt.rate.toFixed(4)} RUB
+                    </Text>
+                    <Text fontSize="$2" color="#9ca3af">
+                      • USDT → EUR: 1 USDT = {usdtToEur.rate.toFixed(4)} EUR
+                    </Text>
+                    <Text fontSize="$2" color="#60a5fa" marginTop="$1">
+                      Formula: (1 USDT in RUB) ÷ (1 USDT in EUR)
+                    </Text>
+                    <Text fontSize="$2" color="#60a5fa">
+                      = {rubToUsdt.rate.toFixed(4)} ÷ {usdtToEur.rate.toFixed(4)} = {rubToEurIndirect.toFixed(4)} RUB per EUR
+                    </Text>
+                  </YStack>
+                  <YStack marginTop="$2" space="$1">
+                    <Text fontSize="$2" color="#6b7280">
+                      Exchange sources:
+                    </Text>
+                    <Text fontSize="$1" color="#6b7280">
+                      RUB→USDT: {rubToUsdt.exchangeName}
+                    </Text>
+                    <Text fontSize="$1" color="#6b7280">
+                      USDT→EUR: {usdtToEur.exchangeName}
+                    </Text>
+                  </YStack>
+                </YStack>
+              )}
 
               {/* Bidirectional Currency Input */}
               <YStack marginTop="$3">

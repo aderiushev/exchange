@@ -102,9 +102,6 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
         fetchLatestRate('RUB_EUR'),
       ]);
 
-      // Calculate indirect rate (RUB → USDT → EUR)
-      const indirectRate = rubToUsdtData.rate * usdtToEurData.rate;
-
       // Use the most recent timestamp from all three queries
       const latestTimestamp = Math.max(
         rubToUsdtData.timestamp,
@@ -116,8 +113,9 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
       // Economic reality: 1 EUR ≈ 1.05-1.10 USDT, so we invert the scraped rate
       const invertedUsdtToEurRate = usdtToEurData.rate !== 0 ? 1 / usdtToEurData.rate : 0;
 
-      // Calculate indirect rate with inverted USDT→EUR rate
-      const correctedIndirectRate = rubToUsdtData.rate * invertedUsdtToEurRate;
+      // Calculate indirect rate: RUB → USDT → EUR
+      // If 1 USDT = 100 RUB and 1 USDT = 0.95 EUR, then 1 EUR = 100/0.95 = 105.26 RUB
+      const correctedIndirectRate = invertedUsdtToEurRate !== 0 ? rubToUsdtData.rate / invertedUsdtToEurRate : 0;
 
       set({
         rubToUsdt: {
@@ -176,8 +174,9 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
       // Economic reality: 1 EUR ≈ 1.05-1.10 USDT, so we invert the scraped rate
       const invertedUsdtToEurRate = usdtToEurData.rate !== 0 ? 1 / usdtToEurData.rate : 0;
 
-      // Calculate indirect rate with inverted USDT→EUR rate (RUB → USDT → EUR)
-      const correctedIndirectRate = rubToUsdtData.rate * invertedUsdtToEurRate;
+      // Calculate indirect rate: RUB → USDT → EUR
+      // If 1 USDT = 100 RUB and 1 USDT = 0.95 EUR, then 1 EUR = 100/0.95 = 105.26 RUB
+      const correctedIndirectRate = invertedUsdtToEurRate !== 0 ? rubToUsdtData.rate / invertedUsdtToEurRate : 0;
 
       // Use the most recent timestamp from all three queries
       const latestTimestamp = Math.max(
